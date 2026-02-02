@@ -12,17 +12,32 @@ A comprehensive skill for writing scientific manuscripts with journal-specific f
 
 ## Quick Start
 
-### 1. Install the Skill
-
-Copy this entire `academic-writing-skill` folder to your Claude skills directory:
+### 1. Clone the Repository
 
 **macOS:**
 ```bash
-cp -r academic-writing-skill ~/Library/Application\ Support/Claude/skills/user/
+# Clone to Claude plugins directory
+cd ~/.claude/plugins/repos/
+git clone https://github.com/mihinduk/academic-writing-skill.git
 ```
 
 **Linux:**
 ```bash
+# Clone to Claude plugins directory
+cd ~/.claude/plugins/repos/
+git clone https://github.com/mihinduk/academic-writing-skill.git
+```
+
+**Alternative location (if you prefer a different Claude skills directory):**
+```bash
+# Clone to a temporary location first
+git clone https://github.com/mihinduk/academic-writing-skill.git
+
+# Then copy to your Claude skills directory
+# macOS:
+cp -r academic-writing-skill ~/Library/Application\ Support/Claude/skills/user/
+
+# Linux:
 cp -r academic-writing-skill ~/.config/Claude/skills/user/
 ```
 
