@@ -1,0 +1,716 @@
+---
+name: academic-writing
+description: "Comprehensive academic writing assistant for creating, formatting, and managing scientific manuscripts according to journal-specific requirements. Handles methods sections, citations, reference management, format conversion, and dynamic journal template creation for any scientific journal."
+version: 1.1
+---
+
+# Academic Writing Skill
+
+## Overview
+
+This skill provides comprehensive support for writing scientific papers with journal-specific formatting, automated citation management, and format conversion capabilities. It integrates with the docx skill for document creation while adding academic-specific features.
+
+## Core Capabilities
+
+1. **Journal-Specific Formatting**: Write sections according to journal requirements
+2. **Citation Management**: Track, format, and update references automatically
+3. **Reference Database**: Maintain a bibliography with multiple citation styles
+4. **Format Conversion**: Reformat papers between different journal styles
+5. **Methods Section Generation**: Create standardized methods sections for bioinformatics papers
+6. **Dynamic Journal Template Creation**: Automatically research and create journal specifications for any requested journal
+
+## Automatic Journal Detection and Setup
+
+**IMPORTANT**: When a user mentions a journal name in their request, automatically:
+
+1. **Extract the journal name** from the user's message
+2. **Check if template exists**: Look in `~/.claude/plugins/repos/academic-writing-skill/journal_specs/`
+3. **If template doesn't exist**:
+   - Research the journal's author guidelines using WebSearch/WebFetch
+   - Create a new JSON specification file
+   - Inform user that template was created
+4. **Apply the template** to the writing task
+
+**Example user requests that should trigger this:**
+- "Help me write this for Nature Methods"
+- "I need to submit to mSystems"
+- "Can you format this according to PLOS Computational Biology?"
+- "Write a methods section for BMC Bioinformatics"
+
+**Response pattern:**
+```
+User: "Help me write this for [Journal Name]"
+
+Claude:
+[Checks for existing template]
+[If not found: "I don't have a template for [Journal Name] yet. Let me research their requirements..."]
+[Creates template using WebSearch/WebFetch]
+[Confirms: "✅ Created template for [Journal Name]. Key requirements: ..."]
+[Proceeds with writing task using the specifications]
+```
+
+## Usage Workflow
+
+### 1. Initialize a Paper Project
+
+```bash
+# Create paper directory structure
+python scripts/academic_writing/init_paper.py --journal "BMC Bioinformatics" --title "VICAST"
+```
+
+This creates:
+```
+paper_project/
+├── manuscript.json          # Paper metadata and settings
+├── references.bib          # Bibliography in BibTeX format
+├── sections/               # Individual sections as markdown
+│   ├── abstract.md
+│   ├── introduction.md
+│   ├── methods.md
+│   ├── results.md
+│   └── discussion.md
+├── figures/               # Figure files
+└── output/               # Generated documents
+```
+
+### 2. Write Journal-Specific Content
+
+The skill uses journal templates from `journal_specs/` directory:
+
+```python
+# Load journal requirements
+from academic_writing import JournalFormatter
+
+formatter = JournalFormatter("BMC Bioinformatics")
+formatter.get_methods_requirements()
+# Returns: {'max_words': 3000, 'subsections': ['required'], 
+#           'citation_style': 'numbered', 'software_citations': 'required'}
+```
+
+### 3. Manage Citations
+
+Add citations while writing:
+
+```markdown
+VICAST uses BLAST [REF:blast] for sequence alignment and SnpEff [REF:snpeff] 
+for variant annotation.
+```
+
+The skill automatically:
+- Looks up references in `references.bib`
+- Formats according to journal style
+- Updates numbering when references are added/removed
+- Generates formatted reference list
+
+### 4. Generate Formatted Document
+
+```bash
+# Create Word document with all formatting
+python scripts/academic_writing/compile_manuscript.py \
+    --journal "BMC Bioinformatics" \
+    --output manuscript.docx
+```
+
+This:
+- Combines all sections
+- Applies journal-specific formatting
+- Formats citations correctly
+- Adds headers/footers per journal requirements
+- Checks word/character limits
+
+### 5. Reformat for Different Journal
+
+```bash
+# Convert from BMC Bioinformatics to Bioinformatics format
+python scripts/academic_writing/reformat.py \
+    --from "BMC Bioinformatics" \
+    --to "Bioinformatics" \
+    --input manuscript.docx \
+    --output manuscript_bioinformatics.docx
+```
+
+## Journal Specification Files
+
+Each journal has a JSON specification file in `journal_specs/`:
+
+```json
+{
+  "journal_name": "BMC Bioinformatics",
+  "citation_style": "numbered",
+  "reference_format": "vancouver",
+  "sections": {
+    "abstract": {
+      "max_words": 350,
+      "structured": true,
+      "subsections": ["Background", "Results", "Conclusions"]
+    },
+    "methods": {
+      "required": true,
+      "subsections_allowed": true,
+      "software_citation_required": true,
+      "data_availability_required": true
+    }
+  },
+  "formatting": {
+    "page_size": "US Letter",
+    "margins": "1 inch",
+    "font": "Arial",
+    "font_size": 12,
+    "line_spacing": "double",
+    "title_page": true
+  },
+  "reference_style": {
+    "in_text": "[{number}]",
+    "list_format": "{number}. {authors}. {title}. {journal}. {year};{volume}:{pages}."
+  }
+}
+```
+
+## Dynamic Journal Template Creation
+
+### Overview
+
+When a user requests a journal that doesn't have an existing specification file, automatically research and create a new journal template. This ensures the skill can support ANY scientific journal without manual setup.
+
+### Process
+
+**1. Check for Existing Template**
+
+First, check if the journal specification already exists:
+
+```bash
+# List existing journal specs
+ls ~/.claude/plugins/repos/academic-writing-skill/journal_specs/
+```
+
+Journal names in filenames use lowercase with underscores (e.g., `bmc_bioinformatics.json`, `nature_methods.json`).
+
+**2. If Template Doesn't Exist: Research and Create**
+
+Automatically perform the following steps:
+
+#### Step 2a: Research Journal Requirements
+
+Use WebSearch and WebFetch to gather information from:
+- Journal's "Instructions for Authors" or "Author Guidelines" page
+- Journal's submission system documentation
+- Example articles from the journal (for format reference)
+
+**Key information to find:**
+- Full journal name and publisher
+- Citation style (numbered, author-year, author-number)
+- Reference format (Vancouver, APA, Chicago, etc.)
+- Section requirements (abstract, methods, etc.)
+- Word limits for each section
+- Abstract structure (structured vs. unstructured)
+- Software citation requirements
+- Data availability requirements
+- Formatting specifications (font, spacing, margins)
+- Figure and table requirements
+- Supplementary material policies
+
+#### Step 2b: Create Journal Specification File
+
+Create a new JSON file following this template:
+
+```json
+{
+  "journal_name": "[Full Journal Name]",
+  "publisher": "[Publisher Name]",
+  "citation_style": "numbered|author-year|author-number",
+  "reference_format": "vancouver|apa|chicago|custom",
+  "url": "[Journal homepage URL]",
+
+  "sections": {
+    "abstract": {
+      "required": true|false,
+      "max_words": number,
+      "structured": true|false,
+      "subsections": ["Section1", "Section2", ...]
+    },
+    "keywords": {
+      "required": true|false,
+      "min_count": number,
+      "max_count": number
+    },
+    "introduction": {
+      "required": true|false,
+      "subsections_allowed": true|false
+    },
+    "methods": {
+      "required": true|false,
+      "subsections_allowed": true|false,
+      "software_citation_required": true|false,
+      "version_numbers_required": true|false,
+      "data_availability_required": true|false,
+      "code_availability_required": true|false
+    },
+    "results": {
+      "required": true|false,
+      "subsections_allowed": true|false,
+      "can_combine_with_discussion": true|false
+    },
+    "discussion": {
+      "required": true|false,
+      "subsections_allowed": true|false,
+      "can_combine_with_results": true|false
+    },
+    "conclusions": {
+      "required": true|false,
+      "max_words": number
+    },
+    "acknowledgements": {
+      "required": true|false
+    },
+    "availability_and_requirements": {
+      "required": true|false,
+      "template": {
+        "project_name": "required|optional",
+        "project_home_page": "required|optional",
+        "operating_system": "required|optional",
+        "programming_language": "required|optional",
+        "license": "required|optional"
+      }
+    }
+  },
+
+  "formatting": {
+    "page_size": "A4|US Letter|custom",
+    "margins": {
+      "top": "measurement",
+      "bottom": "measurement",
+      "left": "measurement",
+      "right": "measurement"
+    },
+    "font": {
+      "family": "font name or options",
+      "size": number
+    },
+    "line_spacing": "single|double|1.5",
+    "title_page": true|false,
+    "continuous_line_numbers": true|false,
+    "page_numbers": true|false
+  },
+
+  "reference_style": {
+    "in_text_format": "[{number}]|(Author, Year)|Author [{number}]",
+    "multiple_refs_format": "format for multiple citations",
+    "list_format": {
+      "journal_article": "format template with {author}, {title}, etc.",
+      "book": "format template",
+      "book_chapter": "format template",
+      "website": "format template",
+      "software": "format template"
+    },
+    "author_format": "last_name_initials|full_names|etc",
+    "max_authors_before_et_al": number,
+    "doi_format": "format for DOIs",
+    "pmid_format": "optional|required|not_used"
+  },
+
+  "figures_and_tables": {
+    "figure_format": ["accepted file types"],
+    "min_resolution": number,
+    "max_file_size": "size limit",
+    "legend_placement": "above_figure|below_figure",
+    "table_format": "editable|image",
+    "color_figures": "allowed|not_allowed|extra_charge"
+  },
+
+  "supplementary_materials": {
+    "allowed": true|false,
+    "file_types": ["accepted file types"],
+    "max_file_size": "size limit"
+  },
+
+  "word_limits": {
+    "abstract": number,
+    "introduction": number,
+    "methods": number,
+    "results": number,
+    "discussion": number,
+    "conclusions": number,
+    "full_manuscript": number
+  },
+
+  "software_citation_requirements": {
+    "name": "required|optional",
+    "version": "required|optional",
+    "url_or_reference": "required|optional",
+    "parameters_if_modified": "required|recommended|optional",
+    "example": "example citation format"
+  },
+
+  "data_availability_statement": {
+    "required": true|false,
+    "must_include": [
+      "list of required elements"
+    ]
+  },
+
+  "notes": [
+    "Additional important information",
+    "Special requirements or policies",
+    "Preprint policies",
+    "Open access status",
+    "Article processing charges"
+  ]
+}
+```
+
+#### Step 2c: Save the Template
+
+Save the file to:
+```
+~/.claude/plugins/repos/academic-writing-skill/journal_specs/[journal_name_lowercase_underscores].json
+```
+
+**Naming convention:**
+- Lowercase all letters
+- Replace spaces with underscores
+- Remove special characters
+
+**Examples:**
+- "BMC Bioinformatics" → `bmc_bioinformatics.json`
+- "Nature Methods" → `nature_methods.json`
+- "PLOS Computational Biology" → `plos_computational_biology.json`
+- "mSystems" → `msystems.json`
+
+#### Step 2d: Confirm Template Creation
+
+After creating the template, inform the user:
+```
+✅ Created new journal specification for [Journal Name]
+   Location: ~/.claude/plugins/repos/academic-writing-skill/journal_specs/[filename].json
+
+   Key requirements identified:
+   - Citation style: [style]
+   - Abstract: [structured/unstructured, word limit]
+   - Methods: [key requirements]
+   - Data availability: [required/optional]
+```
+
+### Usage Examples
+
+**Example 1: User requests Nature Methods**
+
+```
+User: "Help me write this paper for Nature Methods"
+
+Claude:
+1. Checks: ls journal_specs/ | grep nature_methods
+2. Not found → Research Nature Methods author guidelines
+3. Create nature_methods.json with specifications
+4. Confirm creation with user
+5. Apply specifications to help write the paper
+```
+
+**Example 2: User requests existing journal**
+
+```
+User: "Help me write this paper for BMC Bioinformatics"
+
+Claude:
+1. Checks: journal_specs/bmc_bioinformatics.json exists ✓
+2. Load existing specifications
+3. Apply to writing task
+```
+
+### Research Tips
+
+When researching journal requirements:
+
+1. **Start with official sources**: Look for "Instructions for Authors", "Submission Guidelines", "Author Information"
+2. **Check submission system**: Many journals have detailed requirements in their online submission portals
+3. **Review recent articles**: Download 2-3 recent papers to see actual formatting
+4. **Note publisher patterns**: Journals from the same publisher often share requirements (e.g., all Nature journals, all BMC journals)
+5. **Capture examples**: Include example citation formats in the notes section
+
+### Common Citation Styles by Publisher
+
+**BMC journals (BioMed Central):**
+- Numbered citations [1]
+- Vancouver reference format
+- No structured abstract
+
+**Nature journals:**
+- Numbered superscript citations¹
+- Nature reference format (abbreviated journal names)
+- Often strict word limits
+
+**PLOS journals:**
+- Numbered citations [1]
+- PLOS reference format
+- Structured abstract
+
+**Cell Press:**
+- Author-year format (Smith et al., 2020)
+- Cell reference format
+- Often very strict word limits
+
+**Oxford journals (e.g., Bioinformatics):**
+- Numbered citations [1]
+- Oxford reference format
+- Application Notes have special short format
+
+### Template Validation
+
+After creating a new template, validate it has:
+- [x] Full journal name and publisher
+- [x] Citation style clearly specified
+- [x] Section requirements documented
+- [x] Word limits (if any) included
+- [x] Reference format specified
+- [x] Software citation requirements (for bioinformatics journals)
+- [x] Data availability requirements
+- [x] At least one note about journal policies
+
+### Updating Existing Templates
+
+If a user reports that requirements have changed or were incorrect:
+1. Research updated requirements
+2. Edit the existing JSON file
+3. Note what was changed in comments to user
+4. Consider adding a "last_updated" field to the JSON
+
+## Citation Management
+
+### Reference Database (BibTeX)
+
+```bibtex
+@article{blast,
+  author = {Altschul, Stephen F. and Gish, Warren and Miller, Webb and Myers, Eugene W. and Lipman, David J.},
+  title = {Basic local alignment search tool},
+  journal = {Journal of Molecular Biology},
+  year = {1990},
+  volume = {215},
+  pages = {403-410},
+  doi = {10.1016/S0022-2836(05)80360-2}
+}
+
+@article{snpeff,
+  author = {Cingolani, Pablo and Platts, Adrian and Wang, Le Lily and Coon, Melissa and Nguyen, Tung and Wang, Luan and Land, Susan J. and Lu, Xiangyi and Ruden, Douglas M.},
+  title = {A program for annotating and predicting the effects of single nucleotide polymorphisms, SnpEff},
+  journal = {Fly},
+  year = {2012},
+  volume = {6},
+  pages = {80-92},
+  doi = {10.4161/fly.19695}
+}
+```
+
+### Citation Styles
+
+The skill supports multiple citation styles:
+- **Numbered (Vancouver)**: [1], [2], [3-5]
+- **Author-Year (APA)**: (Smith et al., 2020)
+- **Author-Number**: Smith et al. [1]
+
+### Automatic Reference Formatting
+
+```python
+# Input text with citations
+text = "We used BLAST [REF:blast] and SnpEff [REF:snpeff]."
+
+# Format for BMC Bioinformatics (numbered)
+formatted = formatter.format_citations(text)
+# Output: "We used BLAST [1] and SnpEff [2]."
+
+# Format for Cell (author-year)
+formatted = formatter.format_citations(text, style="author-year")
+# Output: "We used BLAST (Altschul et al., 1990) and SnpEff (Cingolani et al., 2012)."
+```
+
+## Methods Section Template for Bioinformatics Papers
+
+### Standard Structure
+
+```markdown
+## Methods
+
+### Overview
+[Brief description of pipeline/tool]
+
+### Module/Component 1
+[Detailed description]
+- Input data: [format, source]
+- Algorithm: [approach, key parameters]
+- Software: [with citations]
+- Output: [format, content]
+
+### Module/Component 2
+[Same structure]
+
+### Quality Control
+[QC steps and thresholds]
+
+### Implementation and Availability
+- Source code: [GitHub URL]
+- License: [type]
+- Dependencies: [with versions]
+- Documentation: [link]
+```
+
+### Software Citation Helper
+
+```python
+# Auto-generate software citations
+software = {
+    "BLAST": "2.12.0",
+    "SnpEff": "5.1",
+    "Python": "3.8",
+    "samtools": "1.15"
+}
+
+citations = formatter.generate_software_citations(software)
+# Returns formatted text with proper citations
+```
+
+## Format Conversion
+
+### Converting Between Journals
+
+The skill handles:
+- **Citation style conversion**: Numbered ↔ Author-year ↔ Author-number
+- **Section reorganization**: Combine/split sections per journal requirements
+- **Reference list reformatting**: Journal-specific bibliography styles
+- **Formatting updates**: Fonts, spacing, margins, page size
+- **Word count adjustments**: Flagging sections that exceed limits
+
+### Example Conversion
+
+```python
+converter = FormatConverter()
+converter.load_manuscript("manuscript.docx")
+converter.convert(
+    from_journal="BMC Bioinformatics",
+    to_journal="Bioinformatics",
+    output="manuscript_bioinformatics.docx"
+)
+
+# Handles:
+# - BMC: Full methods → Bioinformatics: Abbreviated methods + supplement
+# - Numbered citations → Numbered citations (both use same style)
+# - Standard sections → Applications Note format
+# - Word limits: BMC unlimited → Bioinformatics 2-3 pages
+```
+
+## Integration with docx Skill
+
+This skill uses the docx skill for all document creation but adds:
+- Journal-specific templates
+- Citation management
+- Reference formatting
+- Word count tracking
+- Section validation
+
+```python
+# Use docx skill for creation, this skill for content
+from academic_writing import ManuscriptBuilder
+from docx_skill import create_document
+
+builder = ManuscriptBuilder("BMC Bioinformatics")
+content = builder.compile_sections()  # Get formatted content
+doc = create_document(content, template="bmc_bioinformatics")  # Use docx skill
+```
+
+## Files Structure
+
+```
+academic-writing/
+├── SKILL.md                          # This file
+├── scripts/
+│   ├── init_paper.py                # Initialize paper project
+│   ├── compile_manuscript.py        # Generate final document
+│   ├── reformat.py                  # Convert between formats
+│   ├── citation_manager.py          # Handle citations
+│   └── journal_formatter.py         # Journal-specific formatting
+├── journal_specs/                   # Journal requirement files
+│   ├── bmc_bioinformatics.json
+│   ├── bioinformatics.json
+│   ├── plos_computational_biology.json
+│   ├── nature_methods.json
+│   ├── genome_biology.json
+│   └── msystems.json
+└── templates/                       # Document templates
+    ├── methods_bioinformatics.md    # Standard methods templates
+    └── reference_formats.json       # Citation style definitions
+```
+
+## Quick Start Example
+
+```bash
+# 1. Initialize VICAST paper for BMC Bioinformatics
+python scripts/init_paper.py --journal "BMC Bioinformatics" --title "VICAST"
+
+# 2. Write methods section
+cat > sections/methods.md << 'EOF'
+## VICAST: Viral Cultured-virus Annotation and SnpEff Toolkit
+
+### Overview
+VICAST is a modular pipeline for viral genome annotation and variant 
+analysis [REF:github_vicast]. The pipeline uses BLAST [REF:blast] 
+for annotation transfer and SnpEff [REF:snpeff] for variant annotation.
+
+### Annotation Module
+The module transfers annotations using BLASTp [REF:blast] with thresholds 
+of ≥80% coverage and ≥30% identity...
+EOF
+
+# 3. Add references
+cat > references.bib << 'EOF'
+@misc{github_vicast,
+  author = {Hinton, K. M.},
+  title = {VICAST: Viral Cultured-virus Annotation and SnpEff Toolkit},
+  year = {2025},
+  publisher = {GitHub},
+  url = {https://github.com/mihinduk/VICAST}
+}
+EOF
+
+# 4. Compile to Word document
+python scripts/compile_manuscript.py --output manuscript.docx
+
+# 5. Later: reformat for different journal
+python scripts/reformat.py --to "Bioinformatics" --output short_version.docx
+```
+
+## Best Practices
+
+1. **Use [REF:key] markers**: Always use citation markers in text, never hardcode numbers
+2. **Maintain references.bib**: Keep one central bibliography file
+3. **Request journal specs proactively**: When user mentions a journal name, immediately check if template exists and create if needed
+4. **Validate journal requirements**: After creating a new template, review it with the user before applying
+5. **Update journal specs as needed**: Journal requirements change; update templates based on user feedback
+6. **Version control**: Keep paper projects in git for tracking changes
+7. **Check for publisher patterns**: Journals from the same publisher often share requirements
+
+## Command Reference
+
+```bash
+# Initialize new paper
+init_paper.py --journal "NAME" --title "TITLE" [--directory DIR]
+
+# Compile manuscript
+compile_manuscript.py --journal "NAME" --output FILE [--check-limits]
+
+# Reformat for new journal
+reformat.py --from "JOURNAL1" --to "JOURNAL2" --input IN --output OUT
+
+# Add reference
+citation_manager.py --add BIBFILE --key KEY
+
+# Check citation coverage
+citation_manager.py --check sections/
+
+# Export reference list
+citation_manager.py --export --style "vancouver" --output refs.docx
+```
+
+## Notes
+
+- This skill works seamlessly with Claude Code's file system access
+- All scripts are Python-based for easy modification
+- Journal specs are JSON for easy updates
+- Compatible with both web interface and terminal Claude
+- Integrates with docx skill for document generation

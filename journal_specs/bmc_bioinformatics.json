@@ -1,0 +1,150 @@
+{
+  "journal_name": "BMC Bioinformatics",
+  "publisher": "BioMed Central",
+  "citation_style": "numbered",
+  "reference_format": "vancouver",
+  "url": "https://bmcbioinformatics.biomedcentral.com",
+  
+  "sections": {
+    "abstract": {
+      "required": true,
+      "max_words": 350,
+      "structured": false,
+      "subsections": []
+    },
+    "keywords": {
+      "required": true,
+      "min_count": 3,
+      "max_count": 10
+    },
+    "background": {
+      "required": true,
+      "subsections_allowed": true
+    },
+    "methods": {
+      "required": true,
+      "subsections_allowed": true,
+      "software_citation_required": true,
+      "version_numbers_required": true,
+      "data_availability_required": true,
+      "code_availability_required": true
+    },
+    "results": {
+      "required": true,
+      "subsections_allowed": true,
+      "can_combine_with_discussion": true
+    },
+    "discussion": {
+      "required": true,
+      "subsections_allowed": true,
+      "can_combine_with_results": true
+    },
+    "conclusions": {
+      "required": true,
+      "max_words": 500
+    },
+    "availability_and_requirements": {
+      "required": true,
+      "template": {
+        "project_name": "required",
+        "project_home_page": "required",
+        "operating_system": "required",
+        "programming_language": "required",
+        "license": "required",
+        "restrictions": "optional"
+      }
+    },
+    "declarations": {
+      "required": true,
+      "subsections": [
+        "Ethics approval and consent to participate",
+        "Consent for publication",
+        "Availability of data and materials",
+        "Competing interests",
+        "Funding",
+        "Authors' contributions",
+        "Acknowledgements"
+      ]
+    }
+  },
+  
+  "formatting": {
+    "page_size": "A4 or US Letter",
+    "margins": {
+      "top": "1 inch",
+      "bottom": "1 inch",
+      "left": "1 inch",
+      "right": "1 inch"
+    },
+    "font": {
+      "family": "Arial or Times New Roman",
+      "size": 12
+    },
+    "line_spacing": "double",
+    "title_page": false,
+    "continuous_line_numbers": false,
+    "page_numbers": true
+  },
+  
+  "reference_style": {
+    "in_text_format": "[{number}]",
+    "multiple_refs_format": "[{start}-{end}]",
+    "list_format": {
+      "journal_article": "{number}. {authors}. {title}. {journal}. {year};{volume}:{pages}. {doi_url}",
+      "book": "{number}. {authors}. {title}. {edition}. {publisher}; {year}.",
+      "book_chapter": "{number}. {authors}. {chapter_title}. In: {editors}, editors. {book_title}. {publisher}; {year}. p. {pages}.",
+      "website": "{number}. {authors}. {title}. {url}. Accessed {access_date}.",
+      "software": "{number}. {authors}. {software_name}. {version}. {url}."
+    },
+    "author_format": "last_name_initials",
+    "max_authors_before_et_al": 6,
+    "doi_format": "https://doi.org/{doi}",
+    "pmid_format": "optional"
+  },
+  
+  "figures_and_tables": {
+    "figure_format": ["TIFF", "EPS", "PDF", "PNG"],
+    "min_resolution": 300,
+    "max_file_size": "10 MB",
+    "legend_placement": "below_figure",
+    "table_format": "editable",
+    "color_figures": "allowed"
+  },
+  
+  "supplementary_materials": {
+    "allowed": true,
+    "file_types": ["PDF", "DOCX", "XLSX", "CSV", "TXT", "FASTA", "GFF", "VCF"],
+    "max_file_size": "20 MB per file"
+  },
+  
+  "word_limits": {
+    "abstract": 350,
+    "conclusions": 500,
+    "full_manuscript": null
+  },
+  
+  "software_citation_requirements": {
+    "name": "required",
+    "version": "required",
+    "url_or_reference": "required",
+    "parameters_if_modified": "recommended",
+    "example": "BLAST v2.12.0 [1] (https://blast.ncbi.nlm.nih.gov/)"
+  },
+  
+  "data_availability_statement": {
+    "required": true,
+    "must_include": [
+      "Where data can be accessed",
+      "Accession numbers if applicable",
+      "Any access restrictions"
+    ]
+  },
+  
+  "notes": [
+    "BMC Bioinformatics is open access",
+    "Article Processing Charges apply",
+    "Preprint posting allowed and encouraged",
+    "Software/database papers welcome",
+    "Method papers should include validation/benchmarking"
+  ]
+}
